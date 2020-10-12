@@ -1,0 +1,412 @@
+
+// created by Rodrigo Camargo (hackerpex)
+// 10/12/2020
+// pode usar se creditar
+
+<canvas id="gamecanvas" width="320" height="240">
+
+</canvas>
+<style>
+    canvas {
+        padding-left: 0;
+        padding-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        width: 800px;
+    }
+</style>
+<script>
+
+//constants
+    MOUSE = 1;
+    KEYBOARD = 2;
+
+    EASY = 30;
+    MEDIUM = 50;
+    HARD = 70;
+    VERYHARD = 90;
+
+    LEFT = false;
+    RIGHT = false;
+    UP = false;
+    DOWN = false;
+
+
+    PAUSE = false;
+
+    
+
+
+    window.onload = function () {
+
+        setup();
+        gc = document.getElementById('gamecanvas');
+        canvas2d = gc.getContext('2d');
+
+        setInterval(update, 1000 / 240);
+
+
+
+
+
+
+        document.onkeydown = function (e) {
+
+            if (PAUSE ) {
+                if (e.keyCode == 188) {
+                decDificult();
+                }
+                if (e.keyCode == 190) {
+                    incDificult();
+                }
+            }
+            
+            if (e.keyCode == 13) {
+                PAUSE = !PAUSE;
+            }
+
+            if (control == KEYBOARD) {
+                if (e.keyCode == 37) LEFT = true;
+                if (e.keyCode == 38) UP = true;
+                if (e.keyCode == 39) RIGHT = true;
+                if (e.keyCode == 40) DOWN = true;
+            }
+        }
+
+        document.onkeyup = function (e) {
+            if (control == KEYBOARD) {
+                if (e.keyCode == 37) LEFT = false;
+                if (e.keyCode == 38) UP = false;
+                if (e.keyCode == 39) RIGHT = false;
+                if (e.keyCode == 40) DOWN = false;
+            }
+
+
+        }
+
+
+
+        if (control == MOUSE) {
+
+            gc.addEventListener('mousemove', function (e) {
+                newPoint = e.clientY - bar_size / 2;
+                if (ball_x < bar_weight * 4) {
+                    player1_speed = newPoint - position1_y;
+                    if (player1_speed > 20) {
+                        player1_speed = 20;
+                    }
+                    if (player1_speed < -20) {
+                        player1_speed = -20;
+                    }
+
+                }
+
+
+                position1_y = e.clientY - bar_size / 2;
+
+                if (position1_y < 0) {
+                    position1_y = 0;
+                }
+
+                if (position1_y + bar_size > gc.height) {
+                    position1_y = gc.height - bar_size;
+                }
+
+
+            });
+        }
+
+        coinFlip = getRandomInt(3, 0);
+        console.log(coinFlip);
+        if (coinFlip == 1) {
+            ball_speed_x = 1;
+        }
+        else {
+            ball_speed_x = -1;
+        }
+
+        next();
+
+    }
+
+    function incDificult() {
+        switch (dificult) {
+            case EASY:
+                dificult = MEDIUM;
+                break;
+            case MEDIUM:
+                dificult = HARD;
+                break;
+            case HARD:
+                dificult = VERYHARD;
+                break;
+            default:
+            // code block
+        }
+
+    }
+    function decDificult() {
+        switch (dificult) {
+
+            case MEDIUM:
+                dificult = EASY;
+                break;
+            case HARD:
+                dificult = MEDIUM;
+                break;
+            case VERYHARD:
+                dificult = HARD;
+                break;
+
+            default:
+
+            // code block
+        }
+    }
+
+    function getDificultAlias() {
+        dificult_alias = '';
+
+        switch (dificult) {
+            case EASY:
+                dificult_alias = 'EASY';
+                break;
+            case MEDIUM:
+                dificult_alias = 'MEDIUM';
+                break;
+            case HARD:
+                dificult_alias = 'HARD';
+                break;
+            case VERYHARD:
+                dificult_alias = 'VERYHARD';
+                break;
+
+            default:
+                dificult_alias = 'x';
+            // code block
+        }
+
+        return dificult_alias;
+    }
+
+    function setup() {
+
+        control = KEYBOARD;
+        dificult = MEDIUM;
+
+        position1_y = position2_y = 40;
+        bar_weight = 10;
+        bar_size = 50;
+        ball_x = ball_y = 50;
+        ball_size = 10;
+
+        ball_speed_x = ball_speed_y = -1;
+
+
+        player1_score = player2_score = 0;
+
+        ai_move_factor = 1;
+        ai_move_factor_plus = 0;
+
+
+        // control = MOUSE;
+
+
+        dificult_alias = '';
+
+
+        counter = 0;
+        player1_speed = 1;
+
+
+    }
+
+    function move() {
+
+        if (LEFT || UP) {
+            position1_y -= 1;
+
+        }
+        if (RIGHT || DOWN) {
+            position1_y += 1;
+
+        }
+        if (position1_y < 0) {
+            position1_y = 0;
+        }
+
+        if (position1_y + bar_size > gc.height) {
+            position1_y = gc.height - bar_size;
+        }
+
+
+    }
+
+    function next() {
+
+        ball_x = gc.width / 2;
+        ball_y = gc.height / 2;
+
+        direction = -ball_speed_x;
+        ball_speed_x = 0;
+        ball_speed_y = 0;
+        counter = 3;
+
+        setTimeout(function () {
+            counter = 2;
+            setTimeout(function () {
+                counter = 1;
+                setTimeout(function () {
+                    counter = 0;
+                    ball_speed_x = direction;
+                    ball_speed_y = 1;
+
+                }, 1000);
+
+            }, 1000);
+
+        }, 1000);
+
+    }
+
+    function ai() {
+        r = getRandomInt(100, 0);
+
+
+        if (r <= dificult) {
+            if (position2_y + bar_size / 2 < ball_y + ai_move_factor_plus) {
+                position2_y += ai_move_factor;
+                if (position2_y > gc.height - bar_size) {
+                    position2_y = gc.height - bar_size;
+                }
+            }
+            else {
+                position2_y -= ai_move_factor;
+                if (position2_y < 0) {
+                    position2_y = 0;
+                }
+            }
+        }
+
+        ai_move_factor_plus = 0;
+    }
+
+
+    function update() {
+        if (!PAUSE ) {
+            
+
+            move();
+
+            ai();
+
+            //check boll
+
+            ball_x += ball_speed_x;
+            ball_y += ball_speed_y;
+
+            if (ball_y < ball_size && ball_speed_y < 0) {
+                ball_speed_y = -ball_speed_y;
+            }
+            if (ball_y + ball_size > gc.height && ball_speed_y > 0) {
+                ball_speed_y = -ball_speed_y;
+            }
+
+
+
+
+            if (ball_x < 0 + bar_weight) {
+                if (ball_y + ball_size > position1_y && ball_y - ball_size < position1_y + bar_size) {
+                    ball_speed_x = -ball_speed_x;
+                    bar_colision_position = ball_y - (position1_y + bar_size / 2);
+                    ball_speed_y += (bar_colision_position + player1_speed) * 0.01;
+                    ball_speed_y = -ball_speed_y
+
+                }
+                else {
+                    player2_score++;
+
+                    next();
+                }
+            }
+
+            if (ball_x + ball_size > gc.width - bar_weight) {
+                if (ball_y > position2_y && ball_y < position2_y + bar_size) {
+                    ball_speed_x = -ball_speed_x;
+                    bar_colision_position = ball_y - (position1_y + bar_size / 2);
+                    ball_speed_y += bar_colision_position * 0.01;
+                    ball_speed_y = -ball_speed_y
+                }
+                else {
+                    player1_score++;
+
+                    next();
+                }
+
+            }
+
+            player1_speed = 0;
+
+        }
+
+            canvas2d.fillStyle = 'black';
+            canvas2d.fillRect(0, 0, gc.width, gc.height);
+
+            canvas2d.fillStyle = 'white';
+
+            //player 1
+            canvas2d.fillRect(0, position1_y, bar_weight, bar_size);
+            //player 2
+            canvas2d.fillRect(gc.width - bar_weight, position2_y, bar_weight, bar_size);
+
+            //ball
+            canvas2d.fillRect(ball_x, ball_y, ball_size, ball_size);
+
+            canvas2d.font = "12px Monaco";
+
+            canvas2d.fillText('PLAYER: ' + player1_score + ' X CPU: ' + player2_score, gc.width / 2 - 60, 12);
+
+           
+
+            if (counter > 0) {
+                canvas2d.font = "24px Monaco";
+
+                canvas2d.fillText(counter, gc.width / 2 - 2, gc.height / 2 - 12);
+            }
+
+        
+
+             //config
+             canvas2d.font = "6px Monaco";
+             canvas2d.fillText('DIFICULT: ' + getDificultAlias(), 20, 12);
+
+
+        if (PAUSE ) {
+
+
+       
+
+            canvas2d.font = "24px Monaco";
+
+            canvas2d.fillText('PAUSED', gc.width / 2 - 35, gc.height / 2 - 32);
+
+            canvas2d.font = "8px Monaco";
+
+            canvas2d.fillText('use < and > to change dificult', gc.width / 2 - 140, 20);
+
+
+        }
+
+
+    }
+</script>
+
+<script>
+
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+</script>
